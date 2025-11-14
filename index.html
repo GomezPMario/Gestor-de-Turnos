@@ -181,6 +181,12 @@
                 // Cargar datos iniciales
                 await loadShifts();
 
+                // Mostrar la aplicación
+                showApp();
+
+                // Renderizar el calendario
+                renderCalendar();
+
                 // Polling sencillo para ver cambios (5s) — puedes aumentar o reemplazar por realtime
                 setInterval(loadShifts, 5000);
 
