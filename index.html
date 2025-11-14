@@ -10,21 +10,41 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        html,
-        body {
-            height: 100%;
+        html, body {
             margin: 0;
-            overflow: hidden;
+            padding: 0;
+            width: 100%;
+            height: 100dvh; /* Altura real del móvil (corrige barra del navegador) */
+            overflow: hidden; /* 🚫 NO SCROLL */
         }
 
         body {
             font-family: 'Inter', sans-serif;
         }
 
+        #appContent {
+            width: 100%;
+            height: 100dvh; /* la app ocupa EXACTAMENTE la pantalla */
+            overflow: hidden; /* sin scroll */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* El calendario ocupa TODO el espacio restante */
+        #calendarGrid {
+            flex: 1;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: 1fr; /* todas las filas misma altura */
+        }
+
         /* 📌 Calendario SIN alturas fijas */
-        #calendarGrid>div {
-            aspect-ratio: 1 / 1;
+        /* Las celdas se adaptan perfectamente al alto */
+        #calendarGrid > div {
             min-height: 0;
+            min-width: 0;
+            overflow: hidden;
         }
 
         .selected-shift {
@@ -54,7 +74,7 @@
 <body class="bg-gray-100 text-gray-900">
 
     <!-- 🔵 LOADER -->
-    <div id="loadingSpinner" class="flex items-center justify-center h-screen w-screen">
+    <div id="loadingSpinner" class="flex items-center justify-center w-full h-full">
         <div class="text-center">
             <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
                 viewBox="0 0 24 24">
@@ -68,7 +88,7 @@
     </div>
 
     <!-- 🔵 APLICACIÓN COMPLETA (pantalla 100% sin scroll) -->
-    <div id="appContent" class="hidden h-screen flex flex-col overflow-hidden">
+    <div id="appContent" class="hidden w-full h-full flex flex-col">
 
         <!-- 🔵 HEADER -->
         <header class="flex items-center justify-between px-4 py-2 border-b border-gray-300 flex-none">
@@ -94,10 +114,10 @@
 
         <!-- 🔵 CALENDARIO (ocupa todo el espacio restante) -->
         <main class="flex-1 overflow-hidden p-2">
-            <div id="calendarGrid"
-                class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden h-full shadow-lg">
+            <div id="calendarGrid" class="w-full h-full bg-gray-200 border border-gray-200 rounded-lg shadow-lg">
             </div>
         </main>
+       
 
     </div>
 
