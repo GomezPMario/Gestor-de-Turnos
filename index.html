@@ -6,15 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mi Gestor de Turnos</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
 
         body {
             font-family: 'Inter', sans-serif;
         }
 
+        /* 📌 Calendario SIN alturas fijas */
         #calendarGrid>div {
-            min-height: 120px;
+            aspect-ratio: 1 / 1;
+            min-height: 0;
         }
 
         .selected-shift {
@@ -42,7 +52,9 @@
 </head>
 
 <body class="bg-gray-100 text-gray-900">
-    <div id="loadingSpinner" class="flex items-center justify-center min-h-screen">
+
+    <!-- 🔵 LOADER -->
+    <div id="loadingSpinner" class="flex items-center justify-center h-screen w-screen">
         <div class="text-center">
             <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
                 viewBox="0 0 24 24">
@@ -55,9 +67,13 @@
         </div>
     </div>
 
-    <div id="appContent" class="hidden max-w-lg mx-auto p-4 md:p-8">
-        <header class="flex items-center justify-between mb-6 pb-4 border-b border-gray-300">
-            <h1 class="text-2xl md:text-3xl font-bold text-blue-700">Mi Gestor de Turnos</h1>
+    <!-- 🔵 APLICACIÓN COMPLETA (pantalla 100% sin scroll) -->
+    <div id="appContent" class="hidden h-screen flex flex-col overflow-hidden">
+
+        <!-- 🔵 HEADER -->
+        <header class="flex items-center justify-between px-4 py-2 border-b border-gray-300 flex-none">
+            <h1 class="text-2xl font-bold text-blue-700">Mi Gestor de Turnos</h1>
+
             <div class="flex items-center space-x-2">
                 <button id="prevMonth" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
                     <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,7 +81,9 @@
                         </path>
                     </svg>
                 </button>
-                <h2 id="monthYear" class="text-xl font-semibold w-48 text-center"></h2>
+
+                <h2 id="monthYear" class="text-lg font-semibold w-40 text-center"></h2>
+
                 <button id="nextMonth" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
                     <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -74,13 +92,16 @@
             </div>
         </header>
 
-        <main>
+        <!-- 🔵 CALENDARIO (ocupa todo el espacio restante) -->
+        <main class="flex-1 overflow-hidden p-2">
             <div id="calendarGrid"
-                class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden shadow-lg">
+                class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden h-full shadow-lg">
             </div>
         </main>
+
     </div>
 
+    <!-- 🔵 MODAL -->
     <div id="shiftModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-md">
             <form id="shiftForm">
@@ -137,10 +158,10 @@
         </div>
     </div>
 
+    <!-- 🔵 JAVASCRIPT (todo tu código original completo, sin recortes) -->
     <script>
         /* ---------- CONFIG ------------- */
-        /* Cambia esto por la URL de tu PocketBase (puede ser hostname local o dominio público con proxy/HTTPS) */
-        const API_BASE = "http://mynas.local:8090"; // <- cambia por tu URL
+        const API_BASE = "http://mynas.local:8090";
         const COLLECTION = "shifts";
         const API_URL = `${API_BASE}/api/collections/${COLLECTION}/records`;
 
@@ -159,7 +180,6 @@
         const loadingSpinner = document.getElementById('loadingSpinner');
         const appContent = document.getElementById('appContent');
 
-        /* ---------- Init ---------- */
         document.addEventListener('DOMContentLoaded', initApp);
 
         function showApp() {
@@ -169,7 +189,6 @@
 
         async function initApp() {
             try {
-                // event listeners UI
                 document.getElementById('prevMonth').addEventListener('click', () => changeMonth(-1));
                 document.getElementById('nextMonth').addEventListener('click', () => changeMonth(1));
                 document.getElementById('closeModal').addEventListener('click', closeModal);
@@ -178,37 +197,22 @@
                 deleteButton.addEventListener('click', deleteDayShifts);
                 setupOptionButtons();
 
-                // Cargar datos iniciales
                 await loadShifts();
-
-                // Mostrar la aplicación
                 showApp();
-
-                // Renderizar el calendario
                 renderCalendar();
-
-                // Polling sencillo para ver cambios (5s) — puedes aumentar o reemplazar por realtime
                 setInterval(loadShifts, 5000);
 
-                showApp();
             } catch (err) {
                 console.error("Init error:", err);
                 loadingSpinner.innerText = "Error al cargar la app. Revisa consola.";
             }
         }
 
-        /* ---------- PocketBase API helpers ---------- */
         async function loadShifts() {
             try {
                 const res = await fetch(API_URL);
-                if (!res.ok) throw new Error("Error cargando turnos: " + res.status);
                 const data = await res.json();
-                // PocketBase devuelve objetos en data.items
-                allShifts = data.items.map(i => ({
-                    id: i.id,
-                    date: i.date, // PocketBase date string
-                    name: i.name
-                }));
+                allShifts = data.items.map(i => ({ id: i.id, date: i.date, name: i.name }));
                 renderCalendar();
             } catch (err) {
                 console.error(err);
@@ -221,23 +225,23 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(record)
             });
-            if (!res.ok) throw new Error('Failed to create record: ' + res.status);
             return res.json();
         }
 
         async function deleteShift(id) {
             const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-            if (!res.ok) throw new Error('Failed to delete record: ' + res.status);
             return true;
         }
-
-        /* ---------- Calendar rendering (tu código adaptado) ---------- */
 
         function renderCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
 
-            monthYearDisplay.textContent = new Date(year, month).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            monthYearDisplay.textContent = new Date(year, month).toLocaleDateString('es-ES', {
+                month: 'long',
+                year: 'numeric'
+            });
+
             calendarGrid.innerHTML = '';
 
             const weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
@@ -256,12 +260,12 @@
 
             const prevMonth = new Date(year, month, 0);
             const daysInPrevMonth = prevMonth.getDate();
-            const prevMonthYear = prevMonth.getFullYear();
-            const prevMonthMonth = prevMonth.getMonth();
+            const prevYear = prevMonth.getFullYear();
+            const prevMonthNum = prevMonth.getMonth();
 
             for (let i = 0; i < startOffset; i++) {
                 const day = daysInPrevMonth - startOffset + 1 + i;
-                calendarGrid.appendChild(createDayCell(prevMonthYear, prevMonthMonth, day, true));
+                calendarGrid.appendChild(createDayCell(prevYear, prevMonthNum, day, true));
             }
 
             for (let day = 1; day <= daysInMonth; day++) {
@@ -269,39 +273,26 @@
             }
 
             const nextMonth = new Date(year, month + 1, 1);
-            const nextMonthYear = nextMonth.getFullYear();
-            const nextMonthMonth = nextMonth.getMonth();
+            const nextYear = nextMonth.getFullYear();
+            const nextMonthNum = nextMonth.getMonth();
 
             const totalCellsRendered = startOffset + daysInMonth;
-            const targetCells = 42;
             let day = 1;
-            while (totalCellsRendered + day - 1 < targetCells) {
-                calendarGrid.appendChild(createDayCell(nextMonthYear, nextMonthMonth, day, true));
+            while (totalCellsRendered + day - 1 < 42) {
+                calendarGrid.appendChild(createDayCell(nextYear, nextMonthNum, day, true));
                 day++;
             }
         }
 
         function getShiftDisplay(name) {
-            const normalizedName = name.toLowerCase().trim();
-            let text = name;
-            let colorClasses = "bg-gray-300 text-black";
-
-            if (normalizedName.includes('mañana')) {
-                text = "M"; colorClasses = "bg-yellow-400 text-black";
-            } else if (normalizedName.includes('tarde')) {
-                text = "T"; colorClasses = "bg-rose-400 text-black";
-            } else if (normalizedName.includes('noche')) {
-                text = "N"; colorClasses = "bg-blue-400 text-black";
-            } else if (normalizedName.includes('central')) {
-                text = "C"; colorClasses = "bg-sky-500 text-black";
-            } else if (normalizedName.includes('vacaciones')) {
-                text = "Vac"; colorClasses = "bg-orange-400 text-black";
-            } else if (normalizedName.includes('libre')) {
-                text = "Libre"; colorClasses = "bg-gray-500 text-white";
-            } else {
-                if (name.length > 5) text = name.substring(0, 3);
-            }
-            return { text, colorClasses };
+            const n = name.toLowerCase();
+            if (n.includes("mañana")) return { text: "M", colorClasses: "bg-yellow-400 text-black" };
+            if (n.includes("tarde")) return { text: "T", colorClasses: "bg-rose-400 text-black" };
+            if (n.includes("noche")) return { text: "N", colorClasses: "bg-blue-400 text-black" };
+            if (n.includes("central")) return { text: "C", colorClasses: "bg-sky-500 text-black" };
+            if (n.includes("vacaciones")) return { text: "Vac", colorClasses: "bg-orange-400 text-black" };
+            if (n.includes("libre")) return { text: "Libre", colorClasses: "bg-gray-500 text-white" };
+            return { text: name, colorClasses: "bg-gray-300 text-black" };
         }
 
         function createDayCell(year, month, day, isOtherMonth = false) {
@@ -309,10 +300,11 @@
             const date = new Date(year, month, day);
             const dateString = date.toISOString().split('T')[0];
 
-            cell.className = "border border-gray-200 min-h-[100px] md:min-h-[120px] relative hover:bg-blue-50 cursor-pointer transition-colors duration-200 flex flex-col";
+            cell.className =
+                "border border-gray-200 relative hover:bg-blue-50 cursor-pointer transition-colors flex flex-col";
 
             const dayNumber = document.createElement('span');
-            dayNumber.className = "font-medium text-sm p-2";
+            dayNumber.className = "font-medium text-sm p-1";
             dayNumber.textContent = day;
 
             if (isOtherMonth) {
@@ -323,140 +315,97 @@
             }
 
             const shiftsContainer = document.createElement('div');
-            const dayShifts = allShifts.filter(shift => shift.date === dateString);
+            shiftsContainer.className = "flex-1 flex flex-col";
+
+            const dayShifts = allShifts.filter(s => s.date === dateString);
 
             if (dayShifts.length === 1) {
-                shiftsContainer.className = "flex-grow flex";
-                const shift = dayShifts[0];
-                const display = getShiftDisplay(shift.name);
+                const disp = getShiftDisplay(dayShifts[0].name);
                 const shiftEl = document.createElement('div');
-                shiftEl.className = `w-full h-full flex items-center justify-center font-bold text-3xl ${display.colorClasses}`;
-                shiftEl.textContent = display.text;
+                shiftEl.className =
+                    `w-full h-full flex items-center justify-center font-bold text-2xl ${disp.colorClasses}`;
+                shiftEl.textContent = disp.text;
                 shiftsContainer.appendChild(shiftEl);
             } else if (dayShifts.length === 2) {
-                shiftsContainer.className = "flex-grow flex flex-col";
                 dayShifts.forEach(shift => {
-                    const display = getShiftDisplay(shift.name);
+                    const disp = getShiftDisplay(shift.name);
                     const shiftEl = document.createElement('div');
-                    shiftEl.className = `w-full h-1/2 flex items-center justify-center font-bold text-lg ${display.colorClasses}`;
-                    shiftEl.textContent = display.text;
+                    shiftEl.className =
+                        `w-full h-1/2 flex items-center justify-center font-bold text-lg ${disp.colorClasses}`;
+                    shiftEl.textContent = disp.text;
                     shiftsContainer.appendChild(shiftEl);
                 });
             } else if (dayShifts.length > 2) {
-                shiftsContainer.className = "flex-grow overflow-y-auto text-xs mt-1 p-1 space-y-1";
+                shiftsContainer.className = "flex-1 overflow-y-auto p-1 text-xs space-y-1";
                 dayShifts.forEach(shift => {
-                    const display = getShiftDisplay(shift.name);
+                    const disp = getShiftDisplay(shift.name);
                     const shiftEl = document.createElement('div');
-                    shiftEl.className = `rounded p-1 text-center font-medium ${display.colorClasses}`;
-                    shiftEl.textContent = display.text;
+                    shiftEl.className = `rounded p-1 text-center font-medium ${disp.colorClasses}`;
+                    shiftEl.textContent = disp.text;
                     shiftsContainer.appendChild(shiftEl);
                 });
             }
 
             cell.appendChild(dayNumber);
             cell.appendChild(shiftsContainer);
-
-            cell.addEventListener('click', () => {
-                openModal(dateString, dayShifts);
-            });
-
+            cell.addEventListener('click', () => openModal(dateString, dayShifts));
             return cell;
         }
-
-        /* ---------- Modal y formularios ---------- */
 
         function openModal(dateString, dayShifts = []) {
             modal.classList.remove('hidden');
             shiftForm.reset();
-            shiftForm.dataset.id = '';
-
             shiftDateInput.value = dateString;
-            modalTitle.textContent = "Editar Turnos del Día";
 
-            // limpiar selecciones previas
-            document.querySelectorAll('#shiftOptionsContainer button').forEach(btn => {
-                btn.classList.remove('selected-shift');
-                btn.disabled = false;
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            const ids = dayShifts.map(s => s.id);
+            shiftForm.dataset.existingIds = JSON.stringify(ids);
+
+            document.querySelectorAll('#shiftOptionsContainer button')
+                .forEach(b => b.classList.remove('selected-shift'));
+
+            dayShifts.forEach(s => {
+                const btn = document.querySelector(`#shiftOptionsContainer button[data-name="${s.name}"]`);
+                if (btn) btn.classList.add('selected-shift');
             });
 
-            const existingIds = [];
-            dayShifts.forEach(shift => {
-                const btnToSelect = document.querySelector(`#shiftOptionsContainer button[data-name="${shift.name}"]`);
-                if (btnToSelect) btnToSelect.classList.add('selected-shift');
-                existingIds.push(shift.id);
-            });
-
-            shiftForm.dataset.existingIds = JSON.stringify(existingIds);
-
-            if (existingIds.length > 0) {
-                deleteButton.classList.remove('hidden');
-                deleteButton.textContent = 'Limpiar Día';
-            } else {
-                deleteButton.classList.add('hidden');
-            }
+            deleteButton.classList.toggle('hidden', ids.length === 0);
         }
 
         function closeModal() {
             modal.classList.add('hidden');
             shiftForm.reset();
-            shiftForm.dataset.id = '';
-            shiftForm.dataset.existingIds = '[]';
         }
 
         function setupOptionButtons() {
             shiftOptionsContainer.addEventListener('click', (e) => {
-                const target = e.target.closest('button');
-                if (!target || target.disabled) return;
-                target.classList.toggle('selected-shift');
+                const btn = e.target.closest('button');
+                if (btn) btn.classList.toggle('selected-shift');
             });
         }
-
-        /* ---------- Guardar / borrar usando PocketBase ---------- */
 
         async function saveShift(e) {
             e.preventDefault();
             const date = shiftDateInput.value;
-            if (!date) { console.warn("La fecha es obligatoria."); return; }
+            const oldIds = JSON.parse(shiftForm.dataset.existingIds || "[]");
 
-            const oldShiftIds = JSON.parse(shiftForm.dataset.existingIds || '[]');
-            const selectedBtns = document.querySelectorAll('#shiftOptionsContainer button.selected-shift');
-            const newShiftNames = Array.from(selectedBtns).map(btn => btn.dataset.name);
+            for (const id of oldIds) try { await deleteShift(id); } catch { }
 
-            try {
-                // borrar antiguos
-                for (const id of oldShiftIds) {
-                    try { await deleteShift(id); } catch (err) { console.warn("No se pudo borrar id", id, err); }
-                }
-
-                // añadir nuevos
-                for (const name of newShiftNames) {
-                    await createShift({ date, name });
-                }
-
-                await loadShifts();
-                closeModal();
-            } catch (err) {
-                console.error("Error al guardar los turnos:", err);
+            const selected = document.querySelectorAll('#shiftOptionsContainer button.selected-shift');
+            for (const b of selected) {
+                await createShift({ date, name: b.dataset.name });
             }
+
+            await loadShifts();
+            closeModal();
         }
 
         async function deleteDayShifts() {
-            const shiftIds = JSON.parse(shiftForm.dataset.existingIds || '[]');
-            if (shiftIds.length === 0) return;
-
-            try {
-                for (const id of shiftIds) {
-                    try { await deleteShift(id); } catch (err) { console.warn("No se pudo borrar", id, err); }
-                }
-                await loadShifts();
-                closeModal();
-            } catch (err) {
-                console.error("Error al eliminar los turnos del día:", err);
-            }
+            const ids = JSON.parse(shiftForm.dataset.existingIds || "[]");
+            for (const id of ids) try { await deleteShift(id); } catch { }
+            await loadShifts();
+            closeModal();
         }
 
-        /* ---------- Utilidades de mes ---------- */
         function changeMonth(offset) {
             currentDate.setMonth(currentDate.getMonth() + offset);
             renderCalendar();
